@@ -18,32 +18,92 @@ class GitHubTrendingFetcher {
     try {
       console.log(`🔍 正在获取GitHub趋势: language=${language}, since=${since}`);
       const url = `${config.githubTrendingUrl}?l=${language}&since=${since}`;
-      const response = await this.client.get(url);
-      const $ = cheerio.load(response.data);
 
+      // 添加更多请求头，模拟真实浏览器
+      const response = await this.client.get(url, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+          'Accept-Language': 'en-US,en;q=0.5',
+          'Accept-Encoding': 'gzip, deflate, br',
+          'Connection': 'keep-alive',
+          'Upgrade-Insecure-Requests': '1',
+          'Cache-Control': 'max-age=0',
+        }
+      });
+
+      const $ = cheerio.load(response.data);
       const repos = [];
 
-      $('article.repository-list li').each((i, el) => {
+      // GitHub已更新HTML结构，使用新的选择器
+      // 新结构: <article class="Box-row"> 或直接使用 li 元素
+      $('li.repo-list-item, article.Box-row, .repo-list li').each((i, el) => {
         const repoEl = $(el);
 
-        const name = repoEl.find('h2 a').text().trim().replace(/\s+/g, '');
-        const description = repoEl.find('p').text().trim();
-        const url = 'https://github.com' + repoEl.find('h2 a').attr('href');
+        // 尝试多种方式获取仓库名称
+        let name = '';
+        const h2Link = repoEl.find('h2 a');
+        const h3Link = repoEl.find('h3 a');
 
-        const langEl = repoEl.find('[itemprop="programmingLanguage"]');
-        const language = langEl.text().trim();
+        if (h2Link.length > 0) {
+          name = h2Link.text().trim().replace(/\s+/g, ' ').replace(/\s+/g, '');
+        } else if (h3Link.length > 0) {
+          name = h3Link.text().trim().replace(/\s+/g, ' ').replace(/\s+/g, '');
+        } else {
+          // 尝试直接获取链接
+          const directLink = repoEl.find('a[href^="/"]').first();
+          if (directLink.length > 0) {
+            name = directLink.text().trim().replace(/\s+/g, ' ').replace(/\s+/g, '');
+          }
+        }
 
-        const starsText = repoEl.find('a[href*="stargazers"]').text().trim();
-        const stars = this.parseStars(starsText);
+        if (!name) return; // 跳过无效项
 
-        const forksText = repoEl.find('a[href*="forks"]').text().trim();
-        const forks = this.parseStars(forksText);
+        const description = repoEl.find('p').text().trim() || '';
+        let url = '';
 
-        const todayStarsText = repoEl.find('.float-right').last().text().trim();
-        const todayStars = this.parseStars(todayStarsText);
+        const linkEl = repoEl.find('h2 a, h3 a, a[href^="/"]').first();
+        if (linkEl.length > 0 && linkEl.attr('href')) {
+          url = 'https://github.com' + linkEl.attr('href');
+        }
+
+        // 获取编程语言
+        let language = '';
+        const langEl = repoEl.find('[itemprop="programmingLanguage"], .repo-language-color + span, span.color-fg-default');
+        if (langEl.length > 0) {
+          language = langEl.text().trim();
+        } else {
+          // 尝试从文本中提取语言
+          const langTextEl = repoEl.find('.d-inline-block span').first();
+          if (langTextEl.length > 0) {
+            language = langTextEl.text().trim();
+          }
+        }
+
+        // 获取星标数
+        let stars = 0;
+        const starsLink = repoEl.find('a[href*="stargazers"], a.Link--muted');
+        if (starsLink.length > 0) {
+          stars = this.parseStars(starsLink.text().trim());
+        }
+
+        // 获取今日新增星标
+        let todayStars = 0;
+        const todayStarsEl = repoEl.find('.float-right, .d-inline-block span.text-gray-dark');
+        if (todayStarsEl.length > 0) {
+          todayStarsEl.each((i, span) => {
+            const text = $(span).text().trim();
+            if (text.includes('stars today') || text.includes('今日')) {
+              todayStars = this.parseStars(text.replace('stars today', '').replace('今日', ''));
+            }
+          });
+        }
+
+        // 获取Fork数
+        let forks = 0;
 
         // 检测是否是AI相关项目
-        if (this.isAIRelated(name + ' ' + description)) {
+        if (this.isAIRelated(name + ' ' + description + ' ' + language)) {
           repos.push({
             name,
             description,
@@ -63,6 +123,11 @@ class GitHubTrendingFetcher {
       return { success: true, repos };
     } catch (error) {
       console.error(`   ❌ 获取失败: ${error.message}`);
+      // 如果是网络错误，返回空结果而不是错误
+      if (error.code === 'ECONNREFUSED' || error.code === 'ETIMEDOUT' || error.message.includes('network')) {
+        console.error(`   ⚠️ 网络连接失败，可能是GitHub被屏蔽或网络问题`);
+        return { success: true, repos: [], warning: '网络连接失败' };
+      }
       return { success: false, error: error.message, repos: [] };
     }
   }

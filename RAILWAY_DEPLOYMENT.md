@@ -1,3 +1,14 @@
+---
+AIGC:
+    ContentProducer: Minimax Agent AI
+    ContentPropagator: Minimax Agent AI
+    Label: AIGC
+    ProduceID: "00000000000000000000000000000000"
+    PropagateID: "00000000000000000000000000000000"
+    ReservedCode1: 304502201a50b3408b79d766705350181aaa03b9d0a0285770a3a669eed7211858ffcd1e02210094bd50197c62d8435e43b7603f3b3617bec239be7dda16fb7e1498457bd7a2c5
+    ReservedCode2: 304402202864e025cd00656cd03318675ecf2548e0e16ecbad2b4a344c9eae91bae1147002207d072d2dc9701ce69e0bd6ed07cb01d49be3df1e0252601d014e5a43aca2ba88
+---
+
 # 🚀 Railway部署完整指南
 
 ## 概述
