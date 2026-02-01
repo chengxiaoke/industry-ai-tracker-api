@@ -79,8 +79,8 @@ async function startServer() {
     }
 
     // 初始化数据库表
-    const initDbScript = require('./scripts/init-db');
-    initDbScript();
+    //const initDbScript = require('./scripts/init-db');
+    //initDbScript();
 
     // 启动HTTP服务器
     const server = app.listen(config.port, () => {
