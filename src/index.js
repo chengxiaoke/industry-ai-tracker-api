@@ -78,8 +78,14 @@ async function startServer() {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // 数据库表会在首次操作时通过SQLite的IF NOT EXISTS自动创建
-    // 分类和数据源会在API首次访问时动态创建
+    // 显式创建数据库表（如果不存在）
+    console.log('🔧 创建数据库表...');
+    try {
+      db.createTables();
+      console.log('✅ 数据库表创建成功');
+    } catch (error) {
+      console.log('⚠️ 数据库表已存在或创建失败:', error.message);
+    }
 
     // 启动HTTP服务器
     const server = app.listen(config.port, () => {
