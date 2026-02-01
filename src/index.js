@@ -78,9 +78,8 @@ async function startServer() {
       fs.mkdirSync(dataDir, { recursive: true });
     }
 
-    // 初始化数据库表
-    const initDbScript = require('./scripts/init-db');
-    initDbScript();
+    // 数据库表会在首次操作时通过SQLite的IF NOT EXISTS自动创建
+    // 分类和数据源会在API首次访问时动态创建
 
     // 启动HTTP服务器
     const server = app.listen(config.port, () => {
