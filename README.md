@@ -1,3 +1,14 @@
+---
+AIGC:
+    ContentProducer: Minimax Agent AI
+    ContentPropagator: Minimax Agent AI
+    Label: AIGC
+    ProduceID: "00000000000000000000000000000000"
+    PropagateID: "00000000000000000000000000000000"
+    ReservedCode1: 3045022078a580c65488c1e7891dbb81939936111cef457e46f2a893ae354ae5ff5f84bc02210096f9acbb7a61670e4ae6330a7ecefacdbe61c52e33be77cbc3fb7c133cdc7b0b
+    ReservedCode2: 304402205a3bbf45d9d978408daa7dea04b2dc4a6797aa9f20612ef54a290b031c5b2ad40220776ba5636b2d93790f6e8d983d1b18342a0e5a0915af78f6f9aa5f1b394f3d8a
+---
+
 # AI智汇 - 自动数据采集系统
 
 本系统用于自动采集和更新AI工具与行业资讯数据。
